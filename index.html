@@ -1,286 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClearRead — See Your Words Clearly</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .toolbar {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            z-index: 10;
-            opacity: 0.95;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .toolbar.focused {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-3px);
-        }
-
-        .toolbar button {
-            background: none;
-            border: 1px solid #d0d0d0;
-            color: #555;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
-        .toolbar button:hover {
-            background: #f0f0f0;
-            border-color: #bbb;
-            color: #333;
-        }
-
-        .toolbar button:active {
-            transform: scale(0.97);
-        }
-
-        .container {
-            width: 100%;
-            height: 100%;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 50px; /* space for toolbar */
-        }
-
-        #editor {
-            width: 100%;
-            height: 100%;
-            padding: 30px;
-            font-size: 16px;
-            line-height: 1.6;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            box-shadow: 
-                0 8px 32px rgba(31, 38, 135, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            outline: none;
-            resize: none;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #333;
-            animation: float 8s ease-in-out infinite;
-        }
-
-        #editor:focus {
-            border-color: #6c63ff;
-            box-shadow: 
-                0 8px 32px rgba(108, 99, 255, 0.2),
-                0 0 0 3px rgba(108, 99, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0px); }
-        }
-
-        #editor::placeholder {
-            color: #aaa;
-            font-style: italic;
-        }
-
-        #editor::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #editor::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        #editor::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-
-        #editor::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.75);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 999;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearRead — Fast & Simple</title>
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    html, body {
+      height:100%;
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      background:#f5f5f5;
+      font-family:system-ui, sans-serif;
+    }
+    .toolbar {
+      display:flex;
+      gap:10px;
+      padding:10px;
+      justify-content:center;
+      background:#ffffffcc;
+      backdrop-filter:blur(6px);
+      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+      flex-shrink:0;
+    }
+    button {
+      border:1px solid #ccc;
+      border-radius:6px;
+      padding:6px 12px;
+      background:#fff;
+      font-size:14px;
+      cursor:pointer;
+      width:auto;
+    }
+    #editor {
+      flex:1;
+      width:100%;
+      height:100%;
+      padding:12px;
+      font-size:16px;
+      line-height:1.5;
+      border:none;
+      outline:none;
+      resize:none;
+      background:#fff;
+      box-shadow:inset 0 0 4px rgba(0,0,0,0.05);
+    }
+    .toast {
+      position:fixed;
+      bottom:15px;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,0.75);
+      color:white;
+      padding:6px 12px;
+      border-radius:12px;
+      font-size:13px;
+      opacity:0;
+      transition:opacity 0.2s;
+      pointer-events:none;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <textarea id="editor" placeholder="Paste your text here for review..."></textarea>
-        <div class="toolbar">
-            <button id="pasteBtn">Paste</button>
-            <button id="lockBtn">Lock</button>
-            <button id="clearBtn">Clear</button>
-        </div>
-    </div>
+  <div class="toolbar">
+    <button id="pasteBtn">Paste</button>
+    <button id="saveBtn">Save</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+  <textarea id="editor" placeholder="Type or paste text here..."></textarea>
+  <div class="toast" id="toast"></div>
 
-    <div class="toast" id="toast"></div>
+  <script>
+    const editor = document.getElementById('editor');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const toast = document.getElementById('toast');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const editor = document.getElementById('editor');
-            const pasteBtn = document.getElementById('pasteBtn');
-            const lockBtn = document.getElementById('lockBtn');
-            const clearBtn = document.getElementById('clearBtn');
-            const toolbar = document.querySelector('.toolbar');
-            const toast = document.getElementById('toast');
+    const STORAGE_KEY = 'clearread_text';
 
-            const STORAGE_KEY = 'clearread_text_v1';
-            const SECRET_KEY = 'clearread_salt_2025';
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.opacity = 1;
+      setTimeout(()=>toast.style.opacity=0,1200);
+    }
 
-            function showToast(message) {
-                toast.textContent = message;
-                toast.style.opacity = 1;
-                setTimeout(() => {
-                    toast.style.opacity = 0;
-                }, 1500);
-            }
+    function save(){
+      localStorage.setItem(STORAGE_KEY, editor.value);
+      showToast("Saved");
+    }
 
-            function encrypt(text) {
-                if (!text) return '';
-                let result = '';
-                for (let i = 0; i < text.length; i++) {
-                    result += String.fromCharCode(text.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
-                }
-                return btoa(encodeURIComponent(result));
-            }
+    function load(){
+      const data = localStorage.getItem(STORAGE_KEY);
+      if(data) editor.value = data;
+    }
 
-            function decrypt(encryptedText) {
-                if (!encryptedText) return '';
-                try {
-                    let text = decodeURIComponent(atob(encryptedText));
-                    let result = '';
-                    for (let i = 0; i < text.length; i++) {
-                        result += String.fromCharCode(text.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
-                    }
-                    return result;
-                } catch (e) {
-                    console.error("Decryption failed", e);
-                    return '';
-                }
-            }
+    async function paste(){
+      try {
+        if(navigator.clipboard?.readText){
+          const text = await navigator.clipboard.readText();
+          if(text){
+            editor.value = text;
+            showToast("Pasted");
+            return;
+          }
+        }
+        // Fallback for Android
+        const temp = document.createElement("textarea");
+        document.body.appendChild(temp);
+        temp.focus();
+        document.execCommand("paste");
+        editor.value = temp.value;
+        document.body.removeChild(temp);
+        showToast("Pasted (Fallback)");
+      } catch(e){
+        console.log(e);
+        showToast("Clipboard blocked");
+      }
+    }
 
-            function loadSavedText() {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    editor.value = decrypt(saved);
-                }
-            }
+    pasteBtn.onclick = paste;
+    saveBtn.onclick = save;
+    clearBtn.onclick = ()=>{
+      editor.value='';
+      localStorage.removeItem(STORAGE_KEY);
+      showToast("Cleared");
+    };
 
-            // ✅ Updated paste logic (Android-friendly + smooth)
-            pasteBtn.addEventListener('click', async () => {
-                try {
-                    showToast("📋 Pasting...");
-                    let text = "";
-
-                    if (navigator.clipboard && navigator.clipboard.readText) {
-                        text = await navigator.clipboard.readText();
-                    }
-
-                    if (!text) {
-                        // Android fallback
-                        const tempArea = document.createElement("textarea");
-                        document.body.appendChild(tempArea);
-                        tempArea.focus();
-                        document.execCommand("paste");
-                        text = tempArea.value;
-                        document.body.removeChild(tempArea);
-                    }
-
-                    if (text) {
-                        requestAnimationFrame(() => {
-                            editor.value = text;
-                            editor.focus();
-                        });
-                        showToast("✅ Pasted");
-                    } else {
-                        showToast("⚠️ Clipboard empty or blocked");
-                    }
-
-                } catch (err) {
-                    console.error(err);
-                    showToast("⚠️ Clipboard access denied");
-                }
-            });
-
-            lockBtn.addEventListener('click', () => {
-                try {
-                    const encrypted = encrypt(editor.value);
-                    localStorage.setItem(STORAGE_KEY, encrypted);
-                    showToast("🔒 Saved securely");
-                } catch (err) {
-                    showToast("❌ Save failed");
-                    console.error(err);
-                }
-            });
-
-            clearBtn.addEventListener('click', () => {
-                editor.value = '';
-                localStorage.removeItem(STORAGE_KEY);
-                showToast("🧹 All cleared");
-                editor.focus();
-            });
-
-            editor.addEventListener('focus', () => toolbar.classList.add('focused'));
-            editor.addEventListener('blur', () => {
-                setTimeout(() => {
-                    if (!toolbar.matches(':hover')) toolbar.classList.remove('focused');
-                }, 300);
-            });
-            toolbar.addEventListener('mouseenter', () => toolbar.classList.add('focused'));
-            toolbar.addEventListener('mouseleave', () => {
-                if (document.activeElement !== editor) toolbar.classList.remove('focused');
-            });
-
-            loadSavedText();
-            editor.focus();
-        });
-    </script>
+    load();
+  </script>
 </body>
 </html>
