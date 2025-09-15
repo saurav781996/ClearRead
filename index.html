@@ -71,7 +71,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 50px; /* Make space for toolbar */
+            padding-top: 50px; /* space for toolbar */
         }
 
         #editor {
@@ -94,6 +94,7 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             color: #333;
+            animation: float 8s ease-in-out infinite;
         }
 
         #editor:focus {
@@ -104,24 +105,17 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
-        /* Floating animation */
-        #editor {
-            animation: float 8s ease-in-out infinite;
-        }
-
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-5px); }
             100% { transform: translateY(0px); }
         }
 
-        /* Placeholder */
         #editor::placeholder {
             color: #aaa;
             font-style: italic;
         }
 
-        /* Scrollbar */
         #editor::-webkit-scrollbar {
             width: 8px;
         }
@@ -139,13 +133,12 @@
             background: #a8a8a8;
         }
 
-        /* Toast notification */
         .toast {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -181,16 +174,14 @@
             const STORAGE_KEY = 'clearread_text_v1';
             const SECRET_KEY = 'clearread_salt_2025';
 
-            // Show toast message
             function showToast(message) {
                 toast.textContent = message;
                 toast.style.opacity = 1;
                 setTimeout(() => {
                     toast.style.opacity = 0;
-                }, 1800);
+                }, 1500);
             }
 
-            // Simple XOR cipher (for obfuscation, not real security)
             function encrypt(text) {
                 if (!text) return '';
                 let result = '';
@@ -215,7 +206,6 @@
                 }
             }
 
-            // Load saved text on startup
             function loadSavedText() {
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
@@ -223,18 +213,42 @@
                 }
             }
 
-            // Paste from clipboard
+            // ✅ Updated paste logic (Android-friendly + smooth)
             pasteBtn.addEventListener('click', async () => {
                 try {
-                    const text = await navigator.clipboard.readText();
-                    editor.value = text;
-                    editor.focus();
+                    showToast("📋 Pasting...");
+                    let text = "";
+
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        text = await navigator.clipboard.readText();
+                    }
+
+                    if (!text) {
+                        // Android fallback
+                        const tempArea = document.createElement("textarea");
+                        document.body.appendChild(tempArea);
+                        tempArea.focus();
+                        document.execCommand("paste");
+                        text = tempArea.value;
+                        document.body.removeChild(tempArea);
+                    }
+
+                    if (text) {
+                        requestAnimationFrame(() => {
+                            editor.value = text;
+                            editor.focus();
+                        });
+                        showToast("✅ Pasted");
+                    } else {
+                        showToast("⚠️ Clipboard empty or blocked");
+                    }
+
                 } catch (err) {
+                    console.error(err);
                     showToast("⚠️ Clipboard access denied");
                 }
             });
 
-            // Lock (save encrypted)
             lockBtn.addEventListener('click', () => {
                 try {
                     const encrypted = encrypt(editor.value);
@@ -246,7 +260,6 @@
                 }
             });
 
-            // Clear — no confirmation, just wipe
             clearBtn.addEventListener('click', () => {
                 editor.value = '';
                 localStorage.removeItem(STORAGE_KEY);
@@ -254,33 +267,18 @@
                 editor.focus();
             });
 
-            // Toolbar show/hide
-            editor.addEventListener('focus', () => {
-                toolbar.classList.add('focused');
-            });
-
+            editor.addEventListener('focus', () => toolbar.classList.add('focused'));
             editor.addEventListener('blur', () => {
                 setTimeout(() => {
-                    if (!toolbar.matches(':hover')) {
-                        toolbar.classList.remove('focused');
-                    }
+                    if (!toolbar.matches(':hover')) toolbar.classList.remove('focused');
                 }, 300);
             });
-
-            toolbar.addEventListener('mouseenter', () => {
-                toolbar.classList.add('focused');
-            });
-
+            toolbar.addEventListener('mouseenter', () => toolbar.classList.add('focused'));
             toolbar.addEventListener('mouseleave', () => {
-                if (document.activeElement !== editor) {
-                    toolbar.classList.remove('focused');
-                }
+                if (document.activeElement !== editor) toolbar.classList.remove('focused');
             });
 
-            // Load saved content
             loadSavedText();
-
-            // Focus editor
             editor.focus();
         });
     </script>
