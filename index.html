@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Review Page</title>
+    <title>ClearRead — See Your Words Clearly</title>
     <style>
         * {
             margin: 0;
@@ -19,13 +19,59 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        .toolbar {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            opacity: 0.95;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .toolbar.focused {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-3px);
+        }
+
+        .toolbar button {
+            background: none;
+            border: 1px solid #d0d0d0;
+            color: #555;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .toolbar button:hover {
+            background: #f0f0f0;
+            border-color: #bbb;
+            color: #333;
+        }
+
+        .toolbar button:active {
+            transform: scale(0.97);
+        }
+
         .container {
             width: 100%;
             height: 100%;
             padding: 15px;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
+            padding-top: 50px; /* Make space for toolbar */
         }
 
         #editor {
@@ -58,7 +104,7 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
-        /* Optional: Add a subtle floating effect */
+        /* Floating animation */
         #editor {
             animation: float 8s ease-in-out infinite;
         }
@@ -69,14 +115,13 @@
             100% { transform: translateY(0px); }
         }
 
-        /* Placeholder style */
+        /* Placeholder */
         #editor::placeholder {
             color: #aaa;
-            opacity: 1;
             font-style: italic;
         }
 
-        /* Scrollbar styling for WebKit browsers */
+        /* Scrollbar */
         #editor::-webkit-scrollbar {
             width: 8px;
         }
@@ -93,28 +138,150 @@
         #editor::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <textarea id="editor" placeholder="✨ Paste your text here for beautiful, distraction-free review..."></textarea>
+        <textarea id="editor" placeholder="Paste your text here for review..."></textarea>
+        <div class="toolbar">
+            <button id="pasteBtn">Paste</button>
+            <button id="lockBtn">Lock</button>
+            <button id="clearBtn">Clear</button>
+        </div>
     </div>
 
+    <div class="toast" id="toast"></div>
+
     <script>
-        // Focus the editor when page loads
         document.addEventListener('DOMContentLoaded', function() {
             const editor = document.getElementById('editor');
+            const pasteBtn = document.getElementById('pasteBtn');
+            const lockBtn = document.getElementById('lockBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const toolbar = document.querySelector('.toolbar');
+            const toast = document.getElementById('toast');
+
+            const STORAGE_KEY = 'clearread_text_v1';
+            const SECRET_KEY = 'clearread_salt_2025';
+
+            // Show toast message
+            function showToast(message) {
+                toast.textContent = message;
+                toast.style.opacity = 1;
+                setTimeout(() => {
+                    toast.style.opacity = 0;
+                }, 1800);
+            }
+
+            // Simple XOR cipher (for obfuscation, not real security)
+            function encrypt(text) {
+                if (!text) return '';
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    result += String.fromCharCode(text.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+                }
+                return btoa(encodeURIComponent(result));
+            }
+
+            function decrypt(encryptedText) {
+                if (!encryptedText) return '';
+                try {
+                    let text = decodeURIComponent(atob(encryptedText));
+                    let result = '';
+                    for (let i = 0; i < text.length; i++) {
+                        result += String.fromCharCode(text.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+                    }
+                    return result;
+                } catch (e) {
+                    console.error("Decryption failed", e);
+                    return '';
+                }
+            }
+
+            // Load saved text on startup
+            function loadSavedText() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    editor.value = decrypt(saved);
+                }
+            }
+
+            // Paste from clipboard
+            pasteBtn.addEventListener('click', async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    editor.value = text;
+                    editor.focus();
+                } catch (err) {
+                    showToast("⚠️ Clipboard access denied");
+                }
+            });
+
+            // Lock (save encrypted)
+            lockBtn.addEventListener('click', () => {
+                try {
+                    const encrypted = encrypt(editor.value);
+                    localStorage.setItem(STORAGE_KEY, encrypted);
+                    showToast("🔒 Saved securely");
+                } catch (err) {
+                    showToast("❌ Save failed");
+                    console.error(err);
+                }
+            });
+
+            // Clear — no confirmation, just wipe
+            clearBtn.addEventListener('click', () => {
+                editor.value = '';
+                localStorage.removeItem(STORAGE_KEY);
+                showToast("🧹 All cleared");
+                editor.focus();
+            });
+
+            // Toolbar show/hide
+            editor.addEventListener('focus', () => {
+                toolbar.classList.add('focused');
+            });
+
+            editor.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (!toolbar.matches(':hover')) {
+                        toolbar.classList.remove('focused');
+                    }
+                }, 300);
+            });
+
+            toolbar.addEventListener('mouseenter', () => {
+                toolbar.classList.add('focused');
+            });
+
+            toolbar.addEventListener('mouseleave', () => {
+                if (document.activeElement !== editor) {
+                    toolbar.classList.remove('focused');
+                }
+            });
+
+            // Load saved content
+            loadSavedText();
+
+            // Focus editor
             editor.focus();
-
-            // Optional: Smooth focus animation
-            editor.addEventListener('focus', function() {
-                this.style.transform = 'scale(1.01)';
-                this.style.transition = 'transform 0.3s ease';
-            });
-
-            editor.addEventListener('blur', function() {
-                this.style.transform = 'scale(1)';
-            });
         });
     </script>
 </body>
